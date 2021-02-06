@@ -5,6 +5,8 @@ Para iniciar a trabajar con el conjunto de datos es necesario descargar y descom
 
 Adicional a eso usar el Script con el nombre Diabetes Ifood.R
 
+Se recomienda usar las librerias o paquetes "raster", "gridGraphics", "png", "gridExtra", "randomForest", "gplots", "curl", "caret" y "e1071"
+
 The data are submitted on behalf of the Center for Clinical and Translational Research, Virginia Commonwealth University, a recipient of NIH CTSA grant UL1 TR00058 and a recipient of the CERNER data. John Clore (jclore '@' vcu.edu), Krzysztof J. Cios (kcios '@' vcu.edu), Jon DeShazo (jpdeshazo '@' vcu.edu), and Beata Strack (strackb '@' vcu.edu). This data is a de-identified abstract of the Health Facts database (Cerner Corporation, Kansas City, MO).
 
 
