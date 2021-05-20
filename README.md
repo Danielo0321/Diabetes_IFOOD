@@ -5,7 +5,7 @@ Para iniciar a trabajar con el conjunto de datos es necesario descargar y descom
 
 Adicional a eso usar el Script con el nombre Diabetes Ifood.R
 
-**Se recomienda usar las librerias o paquetes "raster", "gridGraphics", "png", "gridExtra", "randomForest", "gplots", "curl", "caret" y "e1071"**
+**Se recomienda usar las librerias o paquetes "raster", "gridGraphics", "png", "gridExtra", "randomForest", "gplots", "curl", "caret", "tree" y "e1071"**
 
 The data are submitted on behalf of the Center for Clinical and Translational Research, Virginia Commonwealth University, a recipient of NIH CTSA grant UL1 TR00058 and a recipient of the CERNER data. John Clore (jclore '@' vcu.edu), Krzysztof J. Cios (kcios '@' vcu.edu), Jon DeShazo (jpdeshazo '@' vcu.edu), and Beata Strack (strackb '@' vcu.edu). This data is a de-identified abstract of the Health Facts database (Cerner Corporation, Kansas City, MO).
 
@@ -286,51 +286,85 @@ Number_patients <- table(diabetes3$readmitted)
 plot(Number_patients,col ="lightblue", xlab = " Readmission Days ", main= " Frequency of Readmission", lwd =20,pch=18)
 ```
 
+![patients](Images/Rplot.png)
+
+```R
+Number_patients_bin <- table(diabetes3$readmittedbin)
+plot(Number_patients_bin,col ="lightblue", xlab = " Readmission Days ", main= " Frequency of Readmission", lwd =20,pch=18)
+```
+![patients](Images/Rplot2.png)
+
 > GRAFICANDO RESULTADOS (SE EVIDENCIA QUE APENAS EL 11% DE LOS PACIENTES REGRESAN NUEVAMENTE AL HOSPITAL EN MENOS DE 30 DÍAS)
 > IDEALMENTE SE BUSCA QUE EL CONJUNTO DE DATOS SEA SUFICIENTEMENTE RICO EN CASOS TANTO <30 COMO >30 O NUNCA. 
 > DE AQUÍ EN ADELANTE SE PUEDEN HACER MÁS TIPOS DE ANÁLISIS Y SÍNTESIS DE MODELOS, SIN EMBARGO, NO SERÍAN DE UTILIDAD PARA APLICARLOS EN LA VIDA REAL
 > DADO QUE ESTARIAMOS HABLANDO DE MODELOS ENTRENADOS APENAS PARA UN TIPO ESPECÍFICO DE CASOS.
 
-![patients](Images/Rplot.png)
-![patients](Images/Rplot2.png)
+---
+___
 
-Number_patients_bin <- table(diabetes3$readmittedbin)
-plot(Number_patients_bin,col ="lightblue", xlab = " Readmission Days ", main= " Frequency of Readmission", lwd =20,pch=18)
+*SEGMENTANDO EL CONJUNTO DE DATOS DE ENTRENAMIENTO 1*
 
+> INICIALMENTE HE DECIDIDO USAR EL 20% DE LOS DATOS
 
-###### SEGMENTANDO EL CONJUNTO DE DATOS DE ENTRENAMIENTO
+```R
 set.seed(111)
 inTrain <- createDataPartition(diabetes3$readmittedbin, p=.2, list=FALSE)
 objTrain <-diabetes3[inTrain,]
 objTest <- diabetes3[-inTrain,]
 table(objTrain$readmittedbin)
+```
 
+```R
 # 0     1 
 # 17398  2214 
+```
 
-# NORMALIZANDO LA CANTIDAD DE DATOS USADOS EN EL CONJUNTO ANTERIOR
+*NORMALIZANDO LA CANTIDAD DE DATOS USADOS EN EL CONJUNTO ANTERIOR 1*
+
+```R
 prop.table(table(objTrain$readmittedbin))
-
+```
+```
 # 0         1 
 # 0.8871099 0.1128901
+```
 
-# SEGMENTACIÓN DE DATOS USADOS PARA EL ENTRENAMIENTO
+---
+___
+
+*SEGMENTACIÓN DE DATOS USADOS PARA EL ENTRENAMIENTO 2*
+
+```R
 table(objTest$readmittedbin)
-
+```
+```
 # 0     1 
 # 69589  8852 
+```
 
-# NORMALIZANDO LA CANTIDAD DE DATOS USADOS EN EL CONJUNTO ANTERIOR
+*NORMALIZANDO LA CANTIDAD DE DATOS USADOS EN EL CONJUNTO ANTERIOR 2*
+
+```R
 prop.table(table(objTest$readmittedbin))
+```
 
+```R
 # 0         1 
 # 0.8871509 0.1128491
+```
 
-#### IDENTIFICACIÓN DE DESBALANCE EN EL CONJUNTO DE DATOS
+---
+___
+
+*IDENTIFICACIÓN DE DESBALANCE EN EL CONJUNTO DE DATOS*
+
+```R
 cfit <- rpart(readmitted ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = objTrain, method="class", minsplit = 20, minbucket = 5, cp = 0.001)
 
 head(predict(cfit))
+```
 
+```R
 # <30       >30        NO
 # 7  0.08661236 0.3034122 0.6099754
 # 10 0.08661236 0.3034122 0.6099754
@@ -338,24 +372,37 @@ head(predict(cfit))
 # 16 0.08661236 0.3034122 0.6099754
 # 18 0.08661236 0.3034122 0.6099754
 # 30 0.08661236 0.3034122 0.6099754
+```
 
-# GRAFICANDO RESULTADOS MEDIANTE ÁRBOLES DE DECISIÓN
+---
+___
+
+*GRAFICANDO RESULTADOS MEDIANTE ÁRBOLES DE DECISIÓN*
+
+```R
 par(mar=c(1,1,0.25,1))
 plot(cfit, branch = 0.4,uniform = TRUE, compress = TRUE)
 text(cfit, pretty = 0)
+```
 
-# 
+![patients](Images/Rtree1.png)
+
+```R 
 rpart.predict <- predict(cfit, newdata = objTrain, type="class")
 tail(rpart.predict)
-
+```
+```R
 # 101743 101748 101751 101753 101756 101766 
 # NO     NO     NO     NO     NO     NO 
 # Levels: <30 >30 NO
-
+```
+```R
 #accuracy.meas(objTest$readmitted, rpart.predict[,2])
 cf <-confusionMatrix(rpart.predict, objTrain$readmitted)
 cf
+````
 
+```R
 # Confusion Matrix and Statistics
 # 
 # Reference
@@ -387,17 +434,26 @@ cf
 # Detection Prevalence     0.0000    0.19208    0.8079
 # Balanced Accuracy        0.5000    0.56578    0.5946
 
+```
+
+```R
 #Mean error rate
 mean.error.rate.rpart <- 1- cf$overall[1]
 mean.error.rate.rpart
+```
 
+```R
 # Accuracy 
 # 0.4213237
+```
 
+```R
 par(mar=c(3,3,3,3))
 plotcp(cfit,lty = 3, col = 1)
 printcp(cfit)
+```
 
+```R
 # Classification tree:
 #   rpart(formula = readmitted ~ time_in_hospital + num_lab_procedures + 
 #           num_procedures + num_medications + number_outpatient + number_emergency + 
@@ -424,15 +480,24 @@ printcp(cfit)
 # 6 0.0014350      8   0.91577 0.93564 0.0076581
 # 7 0.0011039      9   0.91434 0.93542 0.0076578
 # 8 0.0010000     11   0.91213 0.93564 0.0076581
+```
 
+![patients](Images/Rplot3.png)
 
-# The plot shows 3 branches as optimum. The CP value for 3 branches would be around 0.0014. Pruning and replotting the tree:
+---
+___
 
-# VALIDACIÓN CRUZADA PARA EL ÁRBOL DE DECISIÓN
+*The plot shows 3 branches as optimum. The CP value for 3 branches would be around 0.0014. Pruning and replotting the tree:*
+
+* REALIZO UNA VALIDACIÓN CRUZADA PARA EL ÁRBOL DE DECISIÓN*
+
+```R
 cfit.tree <- tree(readmitted ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = objTrain, method="class")
 cv.cfit.tree <- cv.tree(cfit.tree, FUN = prune.misclass)
 cv.cfit.tree
+```
 
+```R
 # $size
 # [1] 2 1
 # 
@@ -447,40 +512,68 @@ cv.cfit.tree
 # 
 # attr(,"class")
 # [1] "prune"         "tree.sequence"
+```
 
+---
+___
 
-### NUEVA SEGMENTACIÓN O PODA DE ÁRBOL PARA CONTINUAR CON EL ANÁLISIS
+*REALIZO UNA NUEVA SEGMENTACIÓN O PODA DE ÁRBOL PARA CONTINUAR CON EL ANÁLISIS*
+
+```R
 prune.cfit.tree <- prune.misclass(cfit.tree, best = 4)
+```
 
+```R
 # Warning message:
 #   In prune.tree(tree = cfit.tree, best = 4, method = "misclass") :
 #   best is bigger than tree size
-
+```
+```r
 #plot(prune.cfit.tree)
 text(prune.cfit.tree, pretty = 0)
+```
 
-# DIAGRAMA DE ÁRBOL DESPUES DE LA SEGMENTACIÓN O PODA
+![patients](Images/Rplot4.png)
 
+---
+___
+
+*DIAGRAMA DE ÁRBOL DESPUES DE LA SEGMENTACIÓN O PODA*
+
+```R
 cfit2 = prune(cfit, cp = 0.0014)
+```
 
+```R
 par(mar=c(1,1,0.25,1))
 plot(cfit2, branch = 0.4,uniform = TRUE, compress = TRUE)
 text(cfit2)
+```
 
-# CÁLCULO DE LA MATRIZ DE CONFUSIÓN A PARTIR DE LOS RESULTADOS DEL ÁRBOL PODADO
+![patients](Images/Rtree2.png)
 
+---
+___
+
+*CÁLCULO DE LA MATRIZ DE CONFUSIÓN A PARTIR DE LOS RESULTADOS DEL ÁRBOL PODADO*
+
+```R
 #Prediction on test set
 rpart.prune.predict <- predict(cfit2, newdata = objTest,type = "class")
 
 cf.prune <-confusionMatrix(rpart.prune.predict,objTest$readmitted)
 
+
 #Mean error rate
 mean.error.rate.rpart.prune <- 1- cf.prune$overall[1]
 mean.error.rate.rpart.prune
-
+```
+```R
 # Accuracy 
 # 0.4278247
+```
 
+```R
 cf.prune$table
 
 # Reference
@@ -488,23 +581,50 @@ cf.prune$table
 # <30     0     0     0
 # >30  3135  8058  4961
 # NO   5717 19746 36824
+```
 
-# ÁRBOL DE DECISIÓN CON DOS TIPOS DE RESPUESTA
+---
+___
+
+*REALIZO UN ÁRBOL DE DECISIÓN CON DOS TIPOS DE RESPUESTA*
+
+```R
 cfit_bin <- rpart(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = objTrain, method="class", minsplit = 1, minbucket = 1, cp = 0.001)
+```
 
+![patients](Images/Rtree3.png)
+
+```R
 par(mar=c(2,2,0.25,1))
 plot(cfit_bin, branch = 0.4,uniform = TRUE, compress = TRUE)
 text(cfit_bin, pretty = 0)
+````
 
-#How to read plotcp - http://www.wekaleamstudios.co.uk/posts/classification-trees-using-the-rpart-function/#m3mLNpeke0I
+![patients](Images/Rtree4.png)
+
+```R
 rpart.predict_bin <- predict(cfit_bin, newdata = objTrain,type="prob")
 
 View(objTrain)
 head(rpart.predict_bin)
+```
 
+```R
+           0         1
+7  0.9054046 0.0945954
+10 0.9054046 0.0945954
+12 0.9054046 0.0945954
+16 0.9054046 0.0945954
+18 0.9054046 0.0945954
+30 0.9054046 0.0945954
+````
+
+```R
 View(rpart.predict_bin)
 accuracy.meas(objTrain$readmittedbin, rpart.predict_bin[,2])
+```
 
+```R
 # Call: 
 #   accuracy.meas(response = objTrain$readmittedbin, predicted = rpart.predict_bin[, 
 #                                                                                  2])
@@ -514,23 +634,36 @@ accuracy.meas(objTrain$readmittedbin, rpart.predict_bin[,2])
 # precision: 0.763
 # recall: 0.048
 # F: 0.045
+```
 
+```R
 roc.curve(objTrain$readmittedbin, rpart.predict_bin[,2], plotit = T)
 # Area under the curve (AUC): 0.584
 
 
 par =TRUE
+````
+
+![patients](Images/Rcurve.png)
 
 
+```R
 str(rpart.predict_bin)
+
+````
+```R
 # num [1:19612, 1:2] 0.905 0.905 0.905 0.905 0.905 ...
 # - attr(*, "dimnames")=List of 2
 # ..$ : chr [1:19612] "7" "10" "12" "16" ...
 # ..$ : chr [1:2] "0" "1"
-
+```
+```R
 str(objTrain$readmittedbin)
+```
+```R
 # Factor w/ 2 levels "0","1": 1 1 2 1 1 1 1 1 1 1 ...
-
+```
+```
 # cf_bin <-confusionMatrix(rpart.predict_bin, objTrain$readmittedbin)
 # cf_bin
 # # Mean error rate
@@ -539,17 +672,23 @@ str(objTrain$readmittedbin)
 # par(mar=c(3,3,3,3))
 # plotcp(cfit_bin,lty = 3, col = 1)
 # printcp(cfit_bin)
+````
 
-##### The plot shows 34 branches as optimum. The CP value for 2 branches would be around 0.001. Pruning and replotting the tree:
-#After pruning
+> The plot shows 34 branches as optimum. The CP value for 2 branches would be around 0.001. Pruning and replotting the tree:
+> After pruning
+
+```R
 cfit2_bin = prune(cfit_bin, cp = 0.0001)
-
+::>>>,<<
 par(mar=c(.5,.5,.5,.5))
 plot(cfit2_bin, branch = 0.4,uniform = TRUE, compress = TRUE)
 text(cfit2_bin, pretty=0)
 
 head(predict(cfit2_bin))
+```
 
+
+```R
 # 0         1
 # 7  0.9054046 0.0945954
 # 10 0.9054046 0.0945954
@@ -557,12 +696,22 @@ head(predict(cfit2_bin))
 # 16 0.9054046 0.0945954
 # 18 0.9054046 0.0945954
 
-#Prediction on training  set
+```
+![patients](Images/Rtree5.png)
+
+---
+___
+
+*VALIDO LA PREDICCIÓN CON MI CONJUNTO DE DATOS*
+
+```R
 rpart.prune.predict2_bin <- predict(cfit2_bin, newdata = objTrain,type = "class")
 
 cf.prune_bin <-confusionMatrix(rpart.prune.predict2_bin,objTrain$readmittedbin)
 cf.prune_bin
+```
 
+```
 # Confusion Matrix and Statistics
 # 
 # Reference
@@ -589,54 +738,87 @@ cf.prune_bin
 #       Balanced Accuracy : 0.52299
 # 
 #        'Positive' Class : 0
+```
 
+```R
 #Mean error rate
 mean.error.rate.rpart.prune2 <- 1- cf.prune_bin$overall[1]
 mean.error.rate.rpart.prune2
+```
 
+```R
 # Accuracy 
 # 0.1091679 
+```
 
-# over sampling
+*over sampling*
+
+```r
 table(objTrain$readmittedbin)
+```
 
+```
 # 0     1 
 # 17398  2214 
+```
 
-
+```R
 data_balanced_over <- ovun.sample(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = objTrain, method = "over", N = 34794)$data
 table(data_balanced_over$readmittedbin)
+```
 
+```R
 # 0     1 
 # 17398 17396
+```
 
-# under sampling
+*under sampling*
+```R
 data_balanced_under <- ovun.sample(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = objTrain, method = "under", N = 4428, seed=1)$data
 table(data_balanced_under$readmittedbin)
+```
 
+```R
 # 0    1 
 # 2214 2214
+```
 
-# Balanced sampling
+*Balanced sampling*
 
+```R
 data_balanced_both <- ovun.sample(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = objTrain, method = "both", N = 19610, seed=1)$data
 table(data_balanced_both$readmittedbin)
+```
 
+```R
 # 0    1 
 # 9847 9763
+````
+---
+___
 
-# ROSE SYTHETIC DATA BALANCING
+*ROSE SYTHETIC DATA BALANCING*
+
+```R
 data.rose <- ROSE(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = objTrain,seed=1)$data
 table(data.rose$readmittedbin)
+```
 
+```R
 # 0    1 
 # 9848 9764
+```
+---
+___
 
-# build decision tree models-Rose
+*build decision tree models-Rose*
 
+```R
 cfit.rose <- rpart(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = data.rose)
 head(data.rose)
+```
 
+```
 # time_in_hospital num_lab_procedures num_procedures num_medications
 # 1        5.6881038           68.64722     1.12725591       19.766359
 # 2        8.9294231           46.66806     2.25758926       29.753958
@@ -665,11 +847,14 @@ head(data.rose)
 # 4                   7          None      None        No  Steady             0
 # 5                   7          None        >8        No      No             0
 # 6                   7          None      None        No  Steady             0
+```
 
-
+```R
 rpart.predict.rose <- predict(cfit.rose, newdata = data.rose)
 par(2,2,2,2)
+```
 
+```R
 # [[1]]
 # NULL
 # 
@@ -681,17 +866,26 @@ par(2,2,2,2)
 # 
 # [[4]]
 # NULL
+```
 
+```R
 roc.curve(data.rose$readmittedbin, rpart.predict.rose[,2], col= redblue(10000), add =TRUE)
 par =TRUE
+```
 
 
-#Prediction on rose set
+---
+___
+
+*Prediction on rose set*
+```R
 rpart.prune.predict3_bin <- predict(cfit.rose, newdata = data.rose,type = "class")
 
 cf.prune_bin <-confusionMatrix(rpart.prune.predict3_bin,objTrain$readmittedbin)
 cf.prune_bin
+```
 
+```R
 # Confusion Matrix and Statistics
 # 
 # Reference
@@ -718,46 +912,79 @@ cf.prune_bin
 #       Balanced Accuracy : 0.4905          
 #                                           
 #        'Positive' Class : 0
+```
 
+```R
 #Mean error rate
 mean.error.rate.rpart.prune2 <- 1- cf.prune_bin$overall[1]
 mean.error.rate.rpart.prune2
+```
 
+```R
 # Accuracy 
 # 0.4961758 
+```
 
-############ Decision tree models-over sampling
+---
+___
+
+*Decision tree models-over sampling*
+```R
 cfit.over <- rpart(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin,  data = data_balanced_over)
 rpart.predict.over <- predict(cfit.over, newdata = data_balanced_over)
+```
 
+```R
 # plot(, colorize = TRUE)
 # plot(perf2, add = TRUE, colorize = TRUE)
 # roc.curve(data_balanced_over$readmittedbin, rpart.predict.over[,2], add =TRUE, col = greenred(2) )
 # str(rpart.predict.over)
 # confusionMatrix(data_balanced_over$readmittedbin, rpart.predict.over[,2])
+```
 
-# ######## decision tree model-undersampling
+
+*decision tree model-undersampling*
+
+```R
 cfit.under <- rpart(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = data_balanced_under)
 rpart.predict.under <- predict(cfit.over, newdata = data_balanced_under)
 par(new=TRUE)
+```
 
+```R
 ## Warning in par(new = TRUE): calling par(new=TRUE) with no plot
 #roc.curve(data_balanced_under$readmittedbin, rpart.predict.under[,2], add =TRUE, col = bluered(2))
+```
 
-# decision tree model-both under and over sampling
+
+*decision tree model-both under and over sampling*
+
+```R
 cfit.both <- rpart(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = data_balanced_both)
 rpart.predict.both <- predict(cfit.both, newdata = data_balanced_both)
 #roc.curve(data_balanced_both$readmittedbin, rpart.predict.both[,2], add =TRUE, col = redblue(5))
+```
 
-# ROC curve comparison verificar por qué no funciona
+---
+___
+
+*ROC curve comparison verificar por qué no funciona*
+
+```R
 img1 <-  rasterGrob(as.raster(readPNG("~/Archivos Rstudio/dataset_diabetes/ROC curve comparison.png")), interpolate = FALSE)
 #img1
 grid.arrange(img1,ncol = 1)
+```
 
-# Analyze the data using random forests. Report the mean error rate and the confusion matrix.
+
+*Analyze the data using random forests. Report the mean error rate and the confusion matrix*
+
+```R
 rf.diabetes_bin <- randomForest(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = objTrain,importance=TRUE)
 rf.diabetes_bin
+```
 
+```
 # Call:
 #   randomForest(formula = readmittedbin ~ time_in_hospital + num_lab_procedures +      num_procedures + num_medications + number_outpatient + number_emergency +      number_inpatient + race + age + admission_type_id + discharge_disposition_id +      admission_source_id + number_diagnoses + max_glu_serum +      A1Cresult + metformin + insulin, data = objTrain, importance = TRUE) 
 # Type of random forest: classification
@@ -769,18 +996,26 @@ rf.diabetes_bin
 #   0  1 class.error
 # 0 17352 46 0.002643982
 # 1  2177 37 0.983288166
+```
 
+```R
 rf.predict_bin <- predict(rf.diabetes_bin,newdata =objTest)
+```
 
-#Plotting the errors from Random Forest model:
+*Plotting the errors from Random Forest model:*
+```R
 par(mar=c(3,3,3,3))
 plot(rf.diabetes_bin, type="l")
+```
 
-# VERIFICAR ESTOS RESULTADOS
+*VERIFICAR ESTOS RESULTADOS*
+```R
 varImpPlot(rf.diabetes_bin,main = "Important Variables")
 
 importance(rf.diabetes_bin)
+```
 
+```R
 # 0           1 MeanDecreaseAccuracy
 # time_in_hospital         28.382796  -8.6072684            25.655897
 # num_lab_procedures       27.373541  -7.4169385            23.891613
@@ -819,26 +1054,39 @@ importance(rf.diabetes_bin)
 # insulin                         194.42330
 
 # Confusion Matrix and the mean error rate:
+```
 
+```R
 rf.cm_bin <- confusionMatrix(rf.predict_bin,objTest$readmittedbin)
 rf.cm_bin$table
+```
+
+```R
 
 # Reference
 # Prediction     0     1
 # 0 69443  8729
 # 1   146   123
-
+```
+```R
 #Mean error rate
 mean.error.rate.rf <- (1- rf.cm_bin$overall[1])
 mean.error.rate.rf
+```
 
+```
 # Accuracy 
 # 0.1131424 
+```
 
-# Random on three class response variable
+*Random on three class response variable*
+
+```R
 rf.diabetes <- randomForest(readmitted ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = objTrain,importance=TRUE)
 rf.diabetes
+```
 
+```R
 # Call:
 #   randomForest(formula = readmitted ~ time_in_hospital + num_lab_procedures +      num_procedures + num_medications + number_outpatient + number_emergency +      number_inpatient + race + age + admission_type_id + discharge_disposition_id +      admission_source_id + number_diagnoses + max_glu_serum +      A1Cresult + metformin + insulin, data = objTrain, importance = TRUE) 
 # Type of random forest: classification
@@ -851,19 +1099,31 @@ rf.diabetes
 # <30  66  813 1335   0.9701897
 # >30  79 2435 4331   0.6442659
 # NO   29 1925 8599   0.1851606
+```
+---
+___
 
-# GRAFICANDO LOS RESULTADOS
 
+*GRAFICANDO LOS RESULTADOS*
+```R
 rf.predict <- predict(rf.diabetes,newdata =objTest)
+```
 
-#Plotting the errors from Random Forest model:
+*Plotting the errors from Random Forest model:*
+```R
 par(mar=c(3,3,3,3))
 plot(rf.diabetes, type="l")
+```
 
-# IMPORTANCIA DE LAS VARIABLES
+
+*IMPORTANCIA DE LAS VARIABLES*
+
+```R
 varImpPlot(rf.diabetes,main = "Important Variables")
 importance(rf.diabetes)
+```
 
+```
 # <30        >30         NO MeanDecreaseAccuracy
 # time_in_hospital         -3.8719084 -6.2277449 23.4962514           14.3198703
 # num_lab_procedures       -2.1191807 -5.6690938 26.1519774           17.3987478
@@ -900,22 +1160,31 @@ importance(rf.diabetes)
 # A1Cresult                        319.6482
 # metformin                        286.6185
 # insulin                          584.6098
+```
 
-# Confusion Matrix and the mean error rate:
 
+*Confusion Matrix and the mean error rate:*
+
+```R
 rf.cm <- confusionMatrix(rf.predict,objTest$readmitted)
 rf.cm$table
+```
 
+```R
 # Reference
 # Prediction   <30   >30    NO
 # <30   211   255   133
 # >30  3369 10243  7330
 # NO   5272 17306 34322
+```
 
+```R
 #Mean error rate
 mean.error.rate.rf <- (1- rf.cm$overall[1])
 # This gives error rate
 mean.error.rate.rf
-
+```
+```R
 # Accuracy 
 # 0.4291761
+```
