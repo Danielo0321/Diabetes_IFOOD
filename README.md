@@ -291,7 +291,8 @@ plot(Number_patients,col ="lightblue", xlab = " Readmission Days ", main= " Freq
 > DE AQUÍ EN ADELANTE SE PUEDEN HACER MÁS TIPOS DE ANÁLISIS Y SÍNTESIS DE MODELOS, SIN EMBARGO, NO SERÍAN DE UTILIDAD PARA APLICARLOS EN LA VIDA REAL
 > DADO QUE ESTARIAMOS HABLANDO DE MODELOS ENTRENADOS APENAS PARA UN TIPO ESPECÍFICO DE CASOS.
 
-![patients] (Rplot.png)
+![patients](Images/Rplot.png)
+![patients](Images/Rplot2.png)
 
 Number_patients_bin <- table(diabetes3$readmittedbin)
 plot(Number_patients_bin,col ="lightblue", xlab = " Readmission Days ", main= " Frequency of Readmission", lwd =20,pch=18)
