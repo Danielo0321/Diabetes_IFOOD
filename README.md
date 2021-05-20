@@ -3,7 +3,7 @@ Ejercicio usado para Ifood_Test
 
 Para iniciar a trabajar con el conjunto de datos es necesario descargar y descomprimir la carpeta dataset_diabetes
 
-Adicional a eso usar el Script con el nombre Diabetes Ifood.R
+**Los datos se encuentran desbalanceados, por lo que muy fácil se puede llegar a descubrimientos obvios o para nada contundentes**
 
 **Se recomienda usar las librerias o paquetes "raster", "gridGraphics", "png", "gridExtra", "randomForest", "gplots", "curl", "caret", "tree" y "e1071"**
 
@@ -24,7 +24,7 @@ The data contains such attributes as patient number, race, gender, age, admissio
 
 > POSTERIORMENTE LOS ALMACENO EN UNA UBICACIÓN ESPECÍFICA EN MI PC
 
-*INICIALMENTE CARGO LOS ARCHIVOS A MI PROYECTO*
+*INICIALMENTE CARGO LOS ARCHIVOS A UN NUEVO PROYECTO EN R*
 ``` R
 setwd("~/Archivos Rstudio/dataset_diabetes")
 diabetes <- read.csv("diabetic_data.csv")
@@ -487,7 +487,7 @@ printcp(cfit)
 ---
 ___
 
-*The plot shows 3 branches as optimum. The CP value for 3 branches would be around 0.0014. Pruning and replotting the tree:*
+> LA GRÁFICA MUESTRA AL MENOS 3 RAMAS COMO ÓPTIMAS. EL VALOR DE CP PARA LOS 3 BRAZOS O RAMIFICACIONES ESTARÍA ALREDEDOR DE 0,0014. REALIZAR PODA Y REPLANTACIÓN DEL ÁRBOL*
 
 * REALIZO UNA VALIDACIÓN CRUZADA PARA EL ÁRBOL DE DECISIÓN*
 
@@ -674,8 +674,8 @@ str(objTrain$readmittedbin)
 # printcp(cfit_bin)
 ````
 
-> The plot shows 34 branches as optimum. The CP value for 2 branches would be around 0.001. Pruning and replotting the tree:
-> After pruning
+> LA GRÁFICA MUESTRA AL MENOS 34 RAMAS COMO ÓPTIMAS. EL VALOR DE CP PARA LOS 2 BRAZOS O RAMIFICACIONES ESTARÍA ALREDEDOR DE 0,001. REALIZAR PODA Y REPLANTACIÓN DEL ÁRBOL*
+> DESPUÉS DE LA PODA
 
 ```R
 cfit2_bin = prune(cfit_bin, cp = 0.0001)
@@ -751,7 +751,7 @@ mean.error.rate.rpart.prune2
 # 0.1091679 
 ```
 
-*over sampling*
+*SOBRE MUESTREO*
 
 ```r
 table(objTrain$readmittedbin)
@@ -772,7 +772,7 @@ table(data_balanced_over$readmittedbin)
 # 17398 17396
 ```
 
-*under sampling*
+*SUB MUESTREO*
 ```R
 data_balanced_under <- ovun.sample(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = objTrain, method = "under", N = 4428, seed=1)$data
 table(data_balanced_under$readmittedbin)
@@ -783,7 +783,7 @@ table(data_balanced_under$readmittedbin)
 # 2214 2214
 ```
 
-*Balanced sampling*
+*MUESTREO BALANCEADO*
 
 ```R
 data_balanced_both <- ovun.sample(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = objTrain, method = "both", N = 19610, seed=1)$data
@@ -797,7 +797,7 @@ table(data_balanced_both$readmittedbin)
 ---
 ___
 
-*ROSE SYTHETIC DATA BALANCING*
+*BALANCEO DE LA INFORMACIÓN MEDIANTE ROSE SYTHETIC*
 
 ```R
 data.rose <- ROSE(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = objTrain,seed=1)$data
@@ -811,7 +811,7 @@ table(data.rose$readmittedbin)
 ---
 ___
 
-*build decision tree models-Rose*
+*CONSTRUYO UN ÁRBOL DE DECISIÓN CON LA METODOLOGIA MODELS-ROSE*
 
 ```R
 cfit.rose <- rpart(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = data.rose)
@@ -877,7 +877,7 @@ par =TRUE
 ---
 ___
 
-*Prediction on rose set*
+*REALIZO UNA PREDICCIÓN CON EL CONJUNTO DE DATOS ROSE*
 ```R
 rpart.prune.predict3_bin <- predict(cfit.rose, newdata = data.rose,type = "class")
 
@@ -928,7 +928,7 @@ mean.error.rate.rpart.prune2
 ---
 ___
 
-*Decision tree models-over sampling*
+*CONSTRUCCIÓN DE ÁRBOLES DE DECISIÓN CON DATOS DE SOBRE-MUESTREO*
 ```R
 cfit.over <- rpart(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin,  data = data_balanced_over)
 rpart.predict.over <- predict(cfit.over, newdata = data_balanced_over)
@@ -943,7 +943,7 @@ rpart.predict.over <- predict(cfit.over, newdata = data_balanced_over)
 ```
 
 
-*decision tree model-undersampling*
+*CONSTRUCCIÓN DE ÁRBOLES DE DECISIÓN CON DATOS DE SUB-MUESTREO*
 
 ```R
 cfit.under <- rpart(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = data_balanced_under)
@@ -957,7 +957,7 @@ par(new=TRUE)
 ```
 
 
-*decision tree model-both under and over sampling*
+*CONSTRUCCIÓN DE ÁRBOLES DE DECISIÓN CON DATOS DE SOBRE-MUESTREO Y SUB-MUESTREO*
 
 ```R
 cfit.both <- rpart(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = data_balanced_both)
@@ -968,7 +968,7 @@ rpart.predict.both <- predict(cfit.both, newdata = data_balanced_both)
 ---
 ___
 
-*ROC curve comparison verificar por qué no funciona*
+*COMPARACIÓN DE LA CURVA ROC*
 
 ```R
 img1 <-  rasterGrob(as.raster(readPNG("~/Archivos Rstudio/dataset_diabetes/ROC curve comparison.png")), interpolate = FALSE)
@@ -977,7 +977,7 @@ grid.arrange(img1,ncol = 1)
 ```
 
 
-*Analyze the data using random forests. Report the mean error rate and the confusion matrix*
+*ANÁLISIS DE LA DATA CON LA LIBRERIA RANDOMFOREST*
 
 ```R
 rf.diabetes_bin <- randomForest(readmittedbin ~ time_in_hospital + num_lab_procedures + num_procedures + num_medications + number_outpatient + number_emergency + number_inpatient + race + age + admission_type_id + discharge_disposition_id + admission_source_id + number_diagnoses + max_glu_serum + A1Cresult + metformin + insulin, data = objTrain,importance=TRUE)
@@ -1008,10 +1008,16 @@ par(mar=c(3,3,3,3))
 plot(rf.diabetes_bin, type="l")
 ```
 
-*VERIFICAR ESTOS RESULTADOS*
+![patients](Images/Rplot5.png)
+
+*ORGANIZANDO LAS VARIABLES SEGÚN SU CONTRIBUCIÓN PARA LA SÍNTESIS DEL MODELO*
 ```R
 varImpPlot(rf.diabetes_bin,main = "Important Variables")
+```
 
+![patients](Images/Rplot6.png)
+
+```R
 importance(rf.diabetes_bin)
 ```
 
@@ -1115,13 +1121,17 @@ par(mar=c(3,3,3,3))
 plot(rf.diabetes, type="l")
 ```
 
+![patients](Images/Rplot7.png)
 
-*IMPORTANCIA DE LAS VARIABLES*
+
+*ORGANIZANDO LAS VARIABLES SEGÚN SU CONTRIBUCIÓN PARA LA SÍNTESIS DEL MODELO*
 
 ```R
 varImpPlot(rf.diabetes,main = "Important Variables")
 importance(rf.diabetes)
 ```
+
+![patients](Images/Rplot8.png)
 
 ```
 # <30        >30         NO MeanDecreaseAccuracy
